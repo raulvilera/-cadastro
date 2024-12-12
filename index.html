@@ -333,6 +333,9 @@
   </div>
 
   <script>
+    // SUBSTITUA PELA URL DO SEU WEB APP PUBLICADO (por exemplo: https://script.google.com/macros/s/SEU_ID/exec)
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyrzpZLSNO_Huyn84zjAuBFbeLeUUsqUPlCKg_IKJwOeB04oh8y45U-y8Ao7Cxml5Fh/exec'; 
+
     // Manipulação da exibição da data de retorno condicional
     document.getElementById('descricaoOcorrencia').addEventListener('change', function() {
       var dataRetornoGroup = document.getElementById('dataRetornoGroup');
@@ -390,7 +393,7 @@
       alert('Formulário limpo e PDF removido.');
     });
 
-    // Envio do formulário
+    // Envio do formulário via fetch para o Web App
     document.getElementById('ocorrenciaForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -409,29 +412,36 @@
         fotoAluno: ""
       };
 
-      // Captura a foto se for enviada
       var fotoInput = document.getElementById('fotoInput');
       if (fotoInput.files.length > 0) {
         var reader = new FileReader();
         reader.onload = function(evt) {
           formData.fotoAluno = evt.target.result;
-          // Chama a função do servidor
-          google.script.run
-            .withSuccessHandler(onSuccess)
-            .withFailureHandler(onFailure)
-            .cadastrarOcorrenciaEEnviarDocumento(formData);
+          enviarDados(formData);
         };
         reader.readAsDataURL(fotoInput.files[0]);
       } else {
-        // Chama a função do servidor sem foto
-        google.script.run
-          .withSuccessHandler(onSuccess)
-          .withFailureHandler(onFailure)
-          .cadastrarOcorrenciaEEnviarDocumento(formData);
+        enviarDados(formData);
       }
     });
 
+    function enviarDados(formData) {
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(onSuccess)
+      .catch(onFailure);
+    }
+
     function onSuccess(response) {
+      if (!response.success) {
+        alert('Falha: ' + response.message);
+        return;
+      }
+
       alert(response.message);
       document.getElementById('ocorrenciaForm').reset();
       document.getElementById('fotoAluno').style.display = 'none';
@@ -464,4 +474,3 @@
   </script>
 </body>
 </html>
-
